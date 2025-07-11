@@ -11,7 +11,7 @@ const FormRow = ({ type, name, labelText, defaultValue , onChange}) => {
         id={name}
         name={name}
         className="form-input"
-        defaultValue={defaultValue} // Set defaultValue here to pre-populate the input field
+        value={defaultValue} 
         onChange={onChange}
         required
       />
