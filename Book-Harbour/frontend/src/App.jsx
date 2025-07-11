@@ -7,7 +7,20 @@ import {
   Login,
   DashboardLayout,
   Error,
+  AllBooks,
+  Profile,
+  AddBook,
+  Stats,
+
 } from "./pages";
+
+export const checkDefaultTheme = () => {
+  const isDarkTheme = localStorage.getItem("darkTheme") === "true";
+  document.body.classList.toggle("dark-theme", isDarkTheme);
+  return isDarkTheme;
+};
+
+checkDefaultTheme()
 
 const router = createBrowserRouter([
   {
@@ -30,6 +43,25 @@ const router = createBrowserRouter([
       {
         path: "dashboard",
         element: <DashboardLayout />,
+        children:[
+          {
+            index:true,
+            element:<AddBook/>
+          },
+          {
+            path:'stats',
+            element:<Stats/>
+          },
+
+          {
+            path:'all-books',
+            element:<AllBooks/>
+          },
+          {
+            path:'profile',
+            element:<Profile/>
+          }
+        ]
       },
     ],
   },
