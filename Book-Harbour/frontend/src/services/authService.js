@@ -4,6 +4,7 @@ export const registerUser = async (userData) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
+    
   });
   const payload = await res.json();
   if (!res.ok) throw new Error(payload.msg || "Registration failed");

@@ -1,40 +1,48 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-
 import Wrapper from "../assets/wrappers/Dashboard";
 import { Navbar, BigSidebar, SmallSidebar } from "../components";
 
-import { useState, createContext, useContext } from "react";
-import { checkDefaultTheme } from "../App";
-
 const DashboardContext = createContext();
 
-const Dashboard = () => {
+export const useDashboardContext = () => {
+  const ctx = useContext(DashboardContext);
+  if (!ctx) {
+    throw new Error("useDashboardContext must be used within DashboardLayout");
+  }
+  return ctx;
+};
+
+const DashboardLayout = () => {
   const user = { name: "Achintha" };
 
+  const [isDarkTheme, setIsDarkTheme] = useState(
+    () => localStorage.getItem("darkTheme") === "true"
+  );
   const [showSidebar, setShowSidebar] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(checkDefaultTheme);
+
+  useEffect(() => {
+    document.body.classList.toggle("dark-theme", isDarkTheme);
+  }, [isDarkTheme]);
 
   const toggleDarkTheme = () => {
-    const newDarkTheme = !isDarkTheme;
-    setIsDarkTheme(newDarkTheme);
-    document.body.classList.toggle("dark-theme", newDarkTheme);
-    localStorage.setItem("darkTheme", newDarkTheme);
+    setIsDarkTheme((prev) => {
+      const next = !prev;
+      localStorage.setItem("darkTheme", next);
+      return next;
+    });
   };
 
-  const toggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-  };
+  const toggleSidebar = () => setShowSidebar((prev) => !prev);
+  const logoutUser = async () => console.log("logout");
 
-  const logoutUser = async () => {
-    console.log("logout user");
-  };
   return (
     <DashboardContext.Provider
       value={{
         user,
-        showSidebar,
         isDarkTheme,
         toggleDarkTheme,
+        showSidebar,
         toggleSidebar,
         logoutUser,
       }}
@@ -55,6 +63,4 @@ const Dashboard = () => {
   );
 };
 
-export const useDashboardContext = () => useContext(DashboardContext);
-
-export default Dashboard;
+export default DashboardLayout;

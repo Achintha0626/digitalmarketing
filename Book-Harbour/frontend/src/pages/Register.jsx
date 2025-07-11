@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Logo, FormRow } from "../components";
 import Wrapper from "../assets/wrappers/RegisterAndLoginPage";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authService";
+import { toast } from "react-toastify";
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -27,11 +27,14 @@ const Register = () => {
     setError(undefined);
     try {
       const { user, token } = await registerUser(form);
-      // store JWT & maybe user info
+
+      toast.success("Registration successful! 🎉");
+
       localStorage.setItem("token", token);
-      // redirect to dashboard (or wherever)
+
       navigate("/dashboard");
     } catch (err) {
+      toast.error(err.message || "Registration failed");
       setError(err.message);
     } finally {
       setLoading(false);

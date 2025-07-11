@@ -1,9 +1,9 @@
-
 import React, { useState } from "react";
 import { Logo, FormRow } from "../components";
 import Wrapper from "../assets/wrappers/RegisterAndLoginPage";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -20,11 +20,18 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError(undefined);
+
     try {
       const { user, token } = await loginUser(form);
+      // show success toast
+      toast.success("Login successful!");
+      // persist token
       localStorage.setItem("token", token);
+      // redirect
       navigate("/dashboard");
     } catch (err) {
+      // show error toast
+      toast.error(err.message || "Login failed");
       setError(err.message);
     } finally {
       setLoading(false);
