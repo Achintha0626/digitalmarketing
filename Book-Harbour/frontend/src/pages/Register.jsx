@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Logo, FormRow } from "../components";
+import SubmitBtn from "../components/SubmitBtn";
 import Wrapper from "../assets/wrappers/RegisterAndLoginPage";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser } from "../services/authService";
+import customFetch from "../utils/customFetch";
 import { toast } from "react-toastify";
 
 const Register = () => {
@@ -18,24 +19,26 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(undefined);
+
     try {
-      const { user, token } = await registerUser(form);
+      const response = await customFetch.post("/auth/register", form);
+      const { user, token } = response.data;
 
-      toast.success("Registration successful! 🎉");
-
+      toast.success("Registration successful!");
       localStorage.setItem("token", token);
-
       navigate("/dashboard");
     } catch (err) {
-      toast.error(err.message || "Registration failed");
-      setError(err.message);
+      const msg =
+        err.response?.data?.msg || err.message || "Registration failed";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -47,37 +50,38 @@ const Register = () => {
         <Logo />
         <h4>Register</h4>
         {error && <p className="form-error">{error}</p>}
+
         <FormRow
           type="text"
           name="firstName"
           labelText="First Name"
-          value={form.firstName}
+          defaultValue={form.firstName}
           onChange={handleChange}
         />
         <FormRow
           type="text"
           name="lastName"
           labelText="Last Name"
-          value={form.lastName}
+          defaultValue={form.lastName}
           onChange={handleChange}
         />
         <FormRow
           type="email"
           name="email"
           labelText="Email"
-          value={form.email}
+          defaultValue={form.email}
           onChange={handleChange}
         />
         <FormRow
           type="password"
           name="password"
           labelText="Password"
-          value={form.password}
+          defaultValue={form.password}
           onChange={handleChange}
         />
-        <button type="submit" className="btn btn-block" disabled={loading}>
-          {loading ? "Please wait..." : "Submit"}
-        </button>
+
+        <SubmitBtn formBtn isLoading={loading} />
+
         <p>
           Already a member?{" "}
           <Link to="/login" className="member-btn">

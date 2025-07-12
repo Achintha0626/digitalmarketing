@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 const Wrapper = styled.article`
   background: var(--background-secondary-color);
@@ -25,6 +25,12 @@ const Wrapper = styled.article`
     text-transform: uppercase;
     color: var(--white);
     margin-right: 2rem;
+  }
+  .main-icon .cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .info {
     h5 {

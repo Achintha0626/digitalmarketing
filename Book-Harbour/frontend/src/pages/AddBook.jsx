@@ -1,25 +1,40 @@
+
 import React from "react";
 import Wrapper from "../assets/wrappers/DashboardFormPage";
-import { useOutletContext, Form, redirect } from "react-router-dom";
+import { Form, redirect, useActionData } from "react-router-dom";
 import { toast } from "react-toastify";
 import FormRow from "../components/FormRow";
 import { FormRowSelect, SubmitBtn } from "../components";
 import { BOOK_TYPES, BOOK_STATUS } from "../utils/constants";
+import customFetch from "../utils/customFetch";
 
 export const action = async ({ request }) => {
   const formData = await request.formData();
 
-  console.log(" new book data:", Object.fromEntries(formData.entries()));
-  toast.success("Book added successfully!");
-
-  return redirect("/all-books");
+  try {
+    
+    await customFetch.post("/books", formData);
+    toast.success("Book added successfully!");
+    return redirect("/dashboard/all-books");
+  } catch (err) {
+    const msg = err.response?.data?.msg || err.message || "Failed to add book";
+    toast.error(msg);
+    
+    return { error: msg };
+  }
 };
 
 const AddBook = () => {
+  
+  const actionData = useActionData();
+
   return (
     <Wrapper>
-      <Form method="post" className="form" encType="multipart/form-data">
-        <h4 className="form-title">add book</h4>
+      <Form method="post" encType="multipart/form-data" className="form">
+        <h4 className="form-title">Add Book</h4>
+
+        {actionData?.error && <p className="form-error">{actionData.error}</p>}
+
         <div className="form-center">
           <FormRow type="file" name="image" labelText="Book Image" />
 

@@ -1,8 +1,10 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { Logo, FormRow } from "../components";
+import SubmitBtn from "../components/SubmitBtn";
 import Wrapper from "../assets/wrappers/RegisterAndLoginPage";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authService";
+import customFetch from "../utils/customFetch";
 import { toast } from "react-toastify";
 
 const Login = () => {
@@ -22,17 +24,17 @@ const Login = () => {
     setError(undefined);
 
     try {
-      const { user, token } = await loginUser(form);
-      // show success toast
+      // POST /api/v1/auth/login
+      const response = await customFetch.post("/auth/login", form);
+      const { user, token } = response.data;
+
       toast.success("Login successful!");
-      // persist token
       localStorage.setItem("token", token);
-      // redirect
       navigate("/dashboard");
     } catch (err) {
-      // show error toast
-      toast.error(err.message || "Login failed");
-      setError(err.message);
+      const msg = err.response?.data?.msg || err.message || "Login failed";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -44,21 +46,25 @@ const Login = () => {
         <Logo />
         <h4>Login</h4>
         {error && <p className="form-error">{error}</p>}
+
         <FormRow
           type="email"
           name="email"
-          value={form.email}
+          labelText="Email"
+          defaultValue={form.email}
           onChange={handleChange}
         />
         <FormRow
           type="password"
           name="password"
-          value={form.password}
+          labelText="Password"
+          defaultValue={form.password}
           onChange={handleChange}
         />
-        <button type="submit" className="btn btn-block" disabled={loading}>
-          {loading ? "Please wait..." : "Submit"}
-        </button>
+
+        {/* your SubmitBtn uses useNavigation() internally */}
+        <SubmitBtn formBtn />
+
         <p>
           Not a member yet?{" "}
           <Link to="/register" className="member-btn">
