@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
@@ -9,19 +10,19 @@ import {
   DashboardLayout,
   Error,
   Profile,
-  Stats,
 } from "./pages";
 
 import AddBook, { action as addBookAction } from "./pages/AddBook";
 import AllBooks, { loader as allBooksLoader } from "./pages/AllBooks";
 import EditBook, {
-  action as editBookAction,
   loader as editBookLoader,
+  action as editBookAction,
 } from "./pages/EditBook";
 import DeleteBook, {
-  action as deleteBookAction,
   loader as deleteBookLoader,
+  action as deleteBookAction,
 } from "./pages/DeleteBook";
+import Stats, { loader as statsLoader } from "./pages/Stats";
 
 const router = createBrowserRouter([
   {
@@ -65,6 +66,8 @@ const router = createBrowserRouter([
           {
             path: "stats",
             element: <Stats />,
+            loader: statsLoader,
+            errorElement: <Error />,
           },
           {
             path: "profile",

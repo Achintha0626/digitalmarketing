@@ -1,4 +1,6 @@
 
+
+import mongoose from "mongoose";
 import Book from "../models/Book.js";
 import { StatusCodes } from "http-status-codes";
 import { BadRequestError, NotFoundError } from "../errors/customErrors.js";
@@ -6,8 +8,8 @@ import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
 
-const uploadToCloudinary = (buffer) => {
-  return new Promise((resolve, reject) => {
+const uploadToCloudinary = (buffer) =>
+  new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: "book_images" },
       (error, result) => {
@@ -17,7 +19,7 @@ const uploadToCloudinary = (buffer) => {
     );
     streamifier.createReadStream(buffer).pipe(uploadStream);
   });
-};
+
 
 export const createBook = async (req, res) => {
   const { title, author, type, status } = req.body;
@@ -42,12 +44,12 @@ export const createBook = async (req, res) => {
   res.status(StatusCodes.CREATED).json({ book });
 };
 
+
 export const getAllBooks = async (req, res) => {
   const { search, status, type, sort } = req.query;
   const { userId } = req.user;
 
   let query = Book.find({ createdBy: userId });
-
   if (search) {
     query = query.find({
       $or: [
@@ -74,19 +76,17 @@ export const getAllBooks = async (req, res) => {
   });
 };
 
+
 export const getBook = async (req, res) => {
   const { id: bookId } = req.params;
   const { userId } = req.user;
 
-  try {
-    const book = await Book.findOne({ _id: bookId, createdBy: userId });
-    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+  const book = await Book.findOne({ _id: bookId, createdBy: userId });
+  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
 
-    res.status(StatusCodes.OK).json({ book });
-  } catch (error) {
-    throw error;
-  }
+  res.status(StatusCodes.OK).json({ book });
 };
+
 
 export const updateBook = async (req, res) => {
   const { id: bookId } = req.params;
@@ -94,43 +94,60 @@ export const updateBook = async (req, res) => {
   const { userId } = req.user;
 
   const updateData = { title, author, type, status };
-
   if (req.file) {
     const result = await uploadToCloudinary(req.file.buffer);
     updateData.image = result.secure_url;
   }
 
-  try {
-    const book = await Book.findOneAndUpdate(
-      { _id: bookId, createdBy: userId },
-      updateData,
-      { new: true, runValidators: true }
-    );
+  const book = await Book.findOneAndUpdate(
+    { _id: bookId, createdBy: userId },
+    updateData,
+    { new: true, runValidators: true }
+  );
+  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
 
-    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
-
-    res.status(StatusCodes.OK).json({ book });
-  } catch (error) {
-    throw error;
-  }
+  res.status(StatusCodes.OK).json({ book });
 };
+
 
 export const deleteBook = async (req, res) => {
   const { id: bookId } = req.params;
   const { userId } = req.user;
 
+  const book = await Book.findOneAndDelete({ _id: bookId, createdBy: userId });
+  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+
+  
+  if (book.image) {
+    const publicId = book.image.split("/").pop().split(".")[0];
+    await cloudinary.uploader.destroy(`book_images/${publicId}`);
+  }
+
+  res.status(StatusCodes.OK).json({ msg: "Book deleted" });
+};
+
+
+export const showStats = async (req, res) => {
   try {
-    const book = await Book.findOneAndDelete({ _id: bookId, createdBy: userId });
+    const { userId } = req.user;
+    
+    const ownerId = new mongoose.Types.ObjectId(userId);
 
-    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+    const rawStats = await Book.aggregate([
+      { $match: { createdBy: ownerId } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
 
-    if (book.image) {
-      const publicId = book.image.split("/").pop().split(".")[0]; 
-      await cloudinary.uploader.destroy(`book_images/${publicId}`);
-    }
+    const defaultStats = { toRead: 0, reading: 0, finished: 0 };
+    rawStats.forEach((item) => {
+      if (item._id === "To Read") defaultStats.toRead = item.count;
+      if (item._id === "Reading") defaultStats.reading = item.count;
+      if (item._id === "Finished") defaultStats.finished = item.count;
+    });
 
-    res.status(StatusCodes.OK).json({ msg: "Book deleted" });
+    res.status(StatusCodes.OK).json({ defaultStats });
   } catch (error) {
+    
     throw error;
   }
 };
