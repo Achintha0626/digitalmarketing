@@ -13,8 +13,15 @@ import {
 } from "./pages";
 
 import AddBook, { action as addBookAction } from "./pages/AddBook";
-
 import AllBooks, { loader as allBooksLoader } from "./pages/AllBooks";
+import EditBook, {
+  action as editBookAction,
+  loader as editBookLoader,
+} from "./pages/EditBook";
+import DeleteBook, {
+  action as deleteBookAction,
+  loader as deleteBookLoader,
+} from "./pages/DeleteBook";
 
 const router = createBrowserRouter([
   {
@@ -39,6 +46,20 @@ const router = createBrowserRouter([
             path: "all-books",
             element: <AllBooks />,
             loader: allBooksLoader,
+            errorElement: <Error />,
+          },
+          {
+            path: "edit-book/:id",
+            element: <EditBook />,
+            loader: editBookLoader,
+            action: editBookAction,
+            errorElement: <Error />,
+          },
+          {
+            path: "delete-book/:id",
+            element: <DeleteBook />,
+            loader: deleteBookLoader,
+            action: deleteBookAction,
             errorElement: <Error />,
           },
           {

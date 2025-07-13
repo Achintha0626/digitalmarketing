@@ -1,4 +1,4 @@
-// src/components/Book.jsx
+
 import React from "react";
 import { FaCalendarAlt, FaTag, FaClipboardList } from "react-icons/fa";
 import { Link, Form } from "react-router-dom";

@@ -4,7 +4,7 @@ import { BadRequestError, NotFoundError } from "../errors/customErrors.js";
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
-// helper to upload buffer to Cloudinary
+
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -26,7 +26,6 @@ export const createBook = async (req, res) => {
     throw new BadRequestError("Book image is required");
   }
 
-  // upload to Cloudinary
   const result = await uploadToCloudinary(req.file.buffer);
   const imageUrl = result.secure_url;
 
@@ -103,11 +102,22 @@ export const deleteBook = async (req, res) => {
   const { id: bookId } = req.params;
   const { userId } = req.user;
 
-  const book = await Book.findOneAndRemove({
-    _id: bookId,
-    createdBy: userId,
-  });
+  try {
+    const book = await Book.findOneAndDelete({
+      _id: bookId,
+      createdBy: userId,
+    });
 
-  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
-  res.status(StatusCodes.OK).json({ msg: "Book deleted" });
+    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+
+    
+    if (book.image) {
+      const publicId = book.image.split("/").pop().split(".")[0]; 
+      await cloudinary.uploader.destroy(`book_images/${publicId}`);
+    }
+
+    res.status(StatusCodes.OK).json({ msg: "Book deleted" });
+  } catch (error) {
+    throw error; 
+  }
 };
