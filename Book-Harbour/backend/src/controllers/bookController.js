@@ -1,3 +1,4 @@
+
 import Book from "../models/Book.js";
 import { StatusCodes } from "http-status-codes";
 import { BadRequestError, NotFoundError } from "../errors/customErrors.js";
@@ -47,7 +48,14 @@ export const getAllBooks = async (req, res) => {
 
   let query = Book.find({ createdBy: userId });
 
-  if (search) query = query.find({ title: new RegExp(search, "i") });
+  if (search) {
+    query = query.find({
+      $or: [
+        { title: new RegExp(search, "i") },
+        { author: new RegExp(search, "i") },
+      ],
+    });
+  }
   if (status && status !== "all") query = query.find({ status });
   if (type && type !== "all") query = query.find({ type });
 
@@ -70,10 +78,14 @@ export const getBook = async (req, res) => {
   const { id: bookId } = req.params;
   const { userId } = req.user;
 
-  const book = await Book.findOne({ _id: bookId, createdBy: userId });
-  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+  try {
+    const book = await Book.findOne({ _id: bookId, createdBy: userId });
+    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
 
-  res.status(StatusCodes.OK).json({ book });
+    res.status(StatusCodes.OK).json({ book });
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const updateBook = async (req, res) => {
@@ -88,14 +100,19 @@ export const updateBook = async (req, res) => {
     updateData.image = result.secure_url;
   }
 
-  const book = await Book.findOneAndUpdate(
-    { _id: bookId, createdBy: userId },
-    updateData,
-    { new: true, runValidators: true }
-  );
+  try {
+    const book = await Book.findOneAndUpdate(
+      { _id: bookId, createdBy: userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
 
-  if (!book) throw new NotFoundError(`No book with id ${bookId}`);
-  res.status(StatusCodes.OK).json({ book });
+    if (!book) throw new NotFoundError(`No book with id ${bookId}`);
+
+    res.status(StatusCodes.OK).json({ book });
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const deleteBook = async (req, res) => {
@@ -103,14 +120,10 @@ export const deleteBook = async (req, res) => {
   const { userId } = req.user;
 
   try {
-    const book = await Book.findOneAndDelete({
-      _id: bookId,
-      createdBy: userId,
-    });
+    const book = await Book.findOneAndDelete({ _id: bookId, createdBy: userId });
 
     if (!book) throw new NotFoundError(`No book with id ${bookId}`);
 
-    
     if (book.image) {
       const publicId = book.image.split("/").pop().split(".")[0]; 
       await cloudinary.uploader.destroy(`book_images/${publicId}`);
@@ -118,6 +131,6 @@ export const deleteBook = async (req, res) => {
 
     res.status(StatusCodes.OK).json({ msg: "Book deleted" });
   } catch (error) {
-    throw error; 
+    throw error;
   }
 };
