@@ -9,20 +9,16 @@ import {
 
 export const register = async (req, res, next) => {
   try {
-    
     const { firstName, lastName, email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
-   
     if (await User.findOne({ email: normalizedEmail })) {
       throw new BadRequestError("Email already in use");
     }
 
-    
     const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
     const hashed = await hashPassword(password, saltRounds);
 
-    
     const user = await User.create({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -30,10 +26,8 @@ export const register = async (req, res, next) => {
       password: hashed,
     });
 
-    
     const token = createJWT({ id: user._id });
 
-   
     res.status(StatusCodes.CREATED).json({
       user: {
         id: user._id,
@@ -50,20 +44,16 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    
     const { email, password } = req.body;
     const normalizedEmail = email.trim().toLowerCase();
 
-    
     const user = await User.findOne({ email: normalizedEmail });
     if (!user || !(await comparePassword(password, user.password))) {
       throw new UnauthenticatedError("Invalid credentials");
     }
 
-    
     const token = createJWT({ id: user._id });
 
-    
     res.status(StatusCodes.OK).json({
       user: {
         id: user._id,

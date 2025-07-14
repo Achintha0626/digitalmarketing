@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+
 import React, { useState } from "react";
 import { Logo, FormRow } from "../components";
 import SubmitBtn from "../components/SubmitBtn";
@@ -62,7 +62,7 @@ const Login = () => {
           onChange={handleChange}
         />
 
-        {/* your SubmitBtn uses useNavigation() internally */}
+       
         <SubmitBtn formBtn />
 
         <p>

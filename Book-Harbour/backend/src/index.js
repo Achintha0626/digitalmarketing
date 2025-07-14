@@ -1,17 +1,16 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import path from "path";
-
 import { v2 as cloudinary } from "cloudinary";
 
 import authRouter from "./routes/authRouter.js";
+import userRouter from "./routes/userRouter.js";
 import bookRouter from "./routes/bookRouter.js";
 import { errorHandlerMiddleware } from "./middleware/errorHandlerMiddleware.js";
 
 dotenv.config();
-
 const app = express();
+
 app.use(express.json());
 
 cloudinary.config({
@@ -20,16 +19,16 @@ cloudinary.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => {
-    console.error("MongoDB connection error:", err.message);
+    console.error("MongoDB error:", err);
     process.exit(1);
   });
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/users", userRouter);
 app.use("/api/v1/books", bookRouter);
 
 app.use(errorHandlerMiddleware);
