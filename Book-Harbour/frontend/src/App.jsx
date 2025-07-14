@@ -11,12 +11,7 @@ import {
   Error,
 } from "./pages";
 
-
-import Profile, {
-  loader as profileLoader,
-  action as profileAction,
-} from "./pages/Profile";
-
+import { requireAuth } from "./utils/requireAuth"; // ← import it
 
 import AddBook, { action as addBookAction } from "./pages/AddBook";
 import AllBooks, { loader as allBooksLoader } from "./pages/AllBooks";
@@ -28,9 +23,11 @@ import DeleteBook, {
   loader as deleteBookLoader,
   action as deleteBookAction,
 } from "./pages/DeleteBook";
-
-
 import Stats, { loader as statsLoader } from "./pages/Stats";
+import Profile, {
+  loader as profileLoader,
+  action as profileAction,
+} from "./pages/Profile";
 
 const router = createBrowserRouter([
   {
@@ -44,22 +41,21 @@ const router = createBrowserRouter([
       {
         path: "dashboard",
         element: <DashboardLayout />,
+        loader: requireAuth, 
+        errorElement: <Error />,
         children: [
-         
           {
             index: true,
             element: <AddBook />,
             action: addBookAction,
             errorElement: <Error />,
           },
-          
           {
             path: "all-books",
             element: <AllBooks />,
             loader: allBooksLoader,
             errorElement: <Error />,
           },
-          
           {
             path: "edit-book/:id",
             element: <EditBook />,
@@ -67,7 +63,6 @@ const router = createBrowserRouter([
             action: editBookAction,
             errorElement: <Error />,
           },
-         
           {
             path: "delete-book/:id",
             element: <DeleteBook />,
@@ -75,14 +70,12 @@ const router = createBrowserRouter([
             action: deleteBookAction,
             errorElement: <Error />,
           },
-         
           {
             path: "stats",
             element: <Stats />,
             loader: statsLoader,
             errorElement: <Error />,
           },
-          
           {
             path: "profile",
             element: <Profile />,
@@ -97,7 +90,6 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  
   useEffect(() => {
     const isDark = localStorage.getItem("darkTheme") === "true";
     document.body.classList.toggle("dark-theme", isDark);
