@@ -1,5 +1,3 @@
-
-
 import mongoose from "mongoose";
 import Book from "../models/Book.js";
 import { StatusCodes } from "http-status-codes";
@@ -24,20 +22,15 @@ const uploadToCloudinary = (buffer) =>
 export const createBook = async (req, res) => {
   const { title, author, type, status } = req.body;
   const { userId } = req.user;
-
-  if (!req.file) {
-    throw new BadRequestError("Book image is required");
-  }
+  if (!req.file) throw new BadRequestError("Book image is required");
 
   const result = await uploadToCloudinary(req.file.buffer);
-  const imageUrl = result.secure_url;
-
   const book = await Book.create({
     title,
     author,
     type,
     status,
-    image: imageUrl,
+    image: result.secure_url,
     createdBy: userId,
   });
 
@@ -46,34 +39,42 @@ export const createBook = async (req, res) => {
 
 
 export const getAllBooks = async (req, res) => {
-  const { search, status, type, sort } = req.query;
+  const { search, status, type, sort, page, limit } = req.query;
   const { userId } = req.user;
 
-  let query = Book.find({ createdBy: userId });
+  
+  const pageNum = Number(page) || 1;
+  const limitNum = Number(limit) || 10;
+  const skip = (pageNum - 1) * limitNum;
+
+  
+  const filter = { createdBy: userId };
   if (search) {
-    query = query.find({
-      $or: [
-        { title: new RegExp(search, "i") },
-        { author: new RegExp(search, "i") },
-      ],
-    });
+    filter.$or = [
+      { title: new RegExp(search, "i") },
+      { author: new RegExp(search, "i") },
+    ];
   }
-  if (status && status !== "all") query = query.find({ status });
-  if (type && type !== "all") query = query.find({ type });
+  if (status && status !== "all") filter.status = status;
+  if (type && type !== "all") filter.type = type;
 
-  if (sort) {
-    if (sort === "newest") query = query.sort("-createdAt");
-    else if (sort === "oldest") query = query.sort("createdAt");
-    else if (sort === "a-z") query = query.sort("title");
-    else if (sort === "z-a") query = query.sort("-title");
-  }
+  
+  let sortBy = "-createdAt";
+  if (sort === "oldest") sortBy = "createdAt";
+  else if (sort === "a-z") sortBy = "title";
+  else if (sort === "z-a") sortBy = "-title";
 
-  const books = await query;
-  res.status(StatusCodes.OK).json({
-    books,
-    totalBooks: books.length,
-    numOfPages: 1,
-  });
+
+  const [books, totalBooks] = await Promise.all([
+    Book.find(filter).sort(sortBy).skip(skip).limit(limitNum),
+    Book.countDocuments(filter),
+  ]);
+
+  const numOfPages = Math.ceil(totalBooks / limitNum);
+
+  res
+    .status(StatusCodes.OK)
+    .json({ books, totalBooks, numOfPages, currentPage: pageNum });
 };
 
 
@@ -83,7 +84,6 @@ export const getBook = async (req, res) => {
 
   const book = await Book.findOne({ _id: bookId, createdBy: userId });
   if (!book) throw new NotFoundError(`No book with id ${bookId}`);
-
   res.status(StatusCodes.OK).json({ book });
 };
 
@@ -117,7 +117,7 @@ export const deleteBook = async (req, res) => {
   const book = await Book.findOneAndDelete({ _id: bookId, createdBy: userId });
   if (!book) throw new NotFoundError(`No book with id ${bookId}`);
 
-  
+ 
   if (book.image) {
     const publicId = book.image.split("/").pop().split(".")[0];
     await cloudinary.uploader.destroy(`book_images/${publicId}`);
@@ -128,26 +128,20 @@ export const deleteBook = async (req, res) => {
 
 
 export const showStats = async (req, res) => {
-  try {
-    const { userId } = req.user;
-    
-    const ownerId = new mongoose.Types.ObjectId(userId);
+  const { userId } = req.user;
+  const ownerId = new mongoose.Types.ObjectId(userId);
 
-    const rawStats = await Book.aggregate([
-      { $match: { createdBy: ownerId } },
-      { $group: { _id: "$status", count: { $sum: 1 } } },
-    ]);
+  const rawStats = await Book.aggregate([
+    { $match: { createdBy: ownerId } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
 
-    const defaultStats = { toRead: 0, reading: 0, finished: 0 };
-    rawStats.forEach((item) => {
-      if (item._id === "To Read") defaultStats.toRead = item.count;
-      if (item._id === "Reading") defaultStats.reading = item.count;
-      if (item._id === "Finished") defaultStats.finished = item.count;
-    });
+  const defaultStats = { toRead: 0, reading: 0, finished: 0 };
+  rawStats.forEach((item) => {
+    if (item._id === "To Read") defaultStats.toRead = item.count;
+    if (item._id === "Reading") defaultStats.reading = item.count;
+    if (item._id === "Finished") defaultStats.finished = item.count;
+  });
 
-    res.status(StatusCodes.OK).json({ defaultStats });
-  } catch (error) {
-    
-    throw error;
-  }
+  res.status(StatusCodes.OK).json({ defaultStats });
 };

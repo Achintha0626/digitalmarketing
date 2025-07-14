@@ -1,8 +1,9 @@
+
 import React from "react";
-import Wrapper from "../assets/wrappers/BookContainer"; 
-import BookCard from "./BookCard";
-import PageBtnContainer from "./PageBtnContainer";
+import Wrapper from "../assets/wrappers/BookContainer";
 import { useAllBooksContext } from "../pages/AllBooks";
+import PageBtnContainer from "./PageBtnContainer";
+import BookCard from "./BookCard";
 
 const BooksContainer = () => {
   const {
@@ -22,9 +23,9 @@ const BooksContainer = () => {
       <h5>
         {totalBooks} book{books.length > 1 && "s"} found
       </h5>
-      <div className="jobs">
-        {books.map((book) => (
-          <BookCard key={book._id} {...book} />
+      <div className="jobs /* or books */">
+        {books.map((b) => (
+          <BookCard key={b._id} {...b} />
         ))}
       </div>
       {numOfPages > 1 && <PageBtnContainer />}
