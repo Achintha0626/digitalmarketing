@@ -5,19 +5,15 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest --detectOpenHandles"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --runInBand"
   },
   "jest": {
-    "setupFiles": [
-      "<rootDir>/jest.env.js"
-    ],
     "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/src"
-    ],
-    "transform": {}
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/jest.setup.cjs"
+    ]
   },
   "keywords": [],
   "author": "",
