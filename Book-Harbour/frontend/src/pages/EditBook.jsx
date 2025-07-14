@@ -10,18 +10,15 @@ import customFetch from "../utils/customFetch";
 export const loader = async ({ params }) => {
   try {
     const { data } = await customFetch.get(`/books/${params.id}`);
-    return data;
+    return data; 
   } catch (err) {
-    const msg = err.response?.data?.msg || err.message;
-    toast.error(msg);
+    toast.error(err.response?.data?.msg || err.message);
     return redirect("/dashboard/all-books");
   }
 };
 
 export const action = async ({ request, params }) => {
   const formData = await request.formData();
-  const data = Object.fromEntries(formData);
-
   try {
     await customFetch.patch(`/books/${params.id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -39,14 +36,27 @@ export const action = async ({ request, params }) => {
 const EditBook = () => {
   const { book } = useLoaderData();
   const actionData = useActionData();
+
   const [formData, setFormData] = useState({
-    title: book.title,
-    author: book.author,
-    type: book.type,
-    status: book.status,
+    title: "",
+    author: "",
+    type: "",
+    status: "",
   });
   const [selectedFileName, setSelectedFileName] = useState("");
 
+  
+  useEffect(() => {
+    setFormData({
+      title: book.title,
+      author: book.author,
+      type: book.type,
+      status: book.status,
+    });
+    setSelectedFileName("");
+  }, [book]);
+
+ 
   useEffect(() => {
     if (actionData?.error) {
       setSelectedFileName("");
@@ -57,7 +67,7 @@ const EditBook = () => {
         status: book.status,
       });
     }
-  }, [actionData, book.title, book.author, book.type, book.status]);
+  }, [actionData, book]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,21 +76,17 @@ const EditBook = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setSelectedFileName(file.name);
-    } else {
-      setSelectedFileName("");
-    }
+    setSelectedFileName(file ? file.name : "");
   };
 
   return (
     <Wrapper>
       <Form method="patch" encType="multipart/form-data" className="form">
         <h4 className="form-title">Edit Book</h4>
-
         {actionData?.error && <p className="form-error">{actionData.error}</p>}
 
         <div className="form-center">
+          {/* Image chooser */}
           <div className="form-row">
             <label htmlFor="image" className="form-label">
               Book Image
@@ -97,6 +103,7 @@ const EditBook = () => {
             )}
           </div>
 
+          {/* Text fields */}
           <FormRow
             type="text"
             name="title"
@@ -111,22 +118,24 @@ const EditBook = () => {
             value={formData.author}
             onChange={handleChange}
           />
+
+          {/* Selects */}
           <FormRowSelect
             name="type"
             labelText="Type"
+            list={Object.values(BOOK_TYPES)}
             value={formData.type}
             onChange={handleChange}
-            list={Object.values(BOOK_TYPES)}
           />
           <FormRowSelect
             name="status"
             labelText="Status"
+            list={Object.values(BOOK_STATUS)}
             value={formData.status}
             onChange={handleChange}
-            list={Object.values(BOOK_STATUS)}
           />
 
-          <SubmitBtn formBtn />
+          <SubmitBtn formBtn text="Save Changes" />
         </div>
       </Form>
     </Wrapper>
