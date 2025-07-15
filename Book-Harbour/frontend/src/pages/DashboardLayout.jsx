@@ -65,6 +65,7 @@ const DashboardLayout = () => {
         showSidebar,
         toggleSidebar,
         logoutUser,
+        setUser
       }}
     >
       <Wrapper>

@@ -1,18 +1,18 @@
 
-import React, { useState } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Form, useLoaderData, useActionData, redirect } from "react-router-dom";
 import Wrapper from "../assets/wrappers/DashboardFormPage";
 import customFetch from "../utils/customFetch";
 import { toast } from "react-toastify";
 import FormRow from "../components/FormRow";
 import SubmitBtn from "../components/SubmitBtn";
-
+import { useDashboardContext } from "./DashboardLayout";
 
 export async function loader() {
   const { data } = await customFetch.get("/users/show-me");
   return data.user;
 }
-
 
 export async function action({ request }) {
   const formData = await request.formData();
@@ -36,12 +36,19 @@ export async function action({ request }) {
 const Profile = () => {
   const user = useLoaderData();
   const actionData = useActionData();
+  const { setUser } = useDashboardContext();
 
+  
   const [form, setForm] = useState({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
+    email: user.email || "",
   });
+
+  
+  useEffect(() => {
+    setUser(user);
+  }, [user, setUser]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,11 +60,8 @@ const Profile = () => {
       <Form method="post" className="form" encType="multipart/form-data">
         <h4 className="form-title">Profile</h4>
         {actionData?.error && <p className="form-error">{actionData.error}</p>}
-
         <div className="form-center">
-          
-
-          
+         
           <div className="form-row">
             <label htmlFor="avatar" className="form-label">
               Select An Image File (Max 2 MB):
@@ -71,7 +75,7 @@ const Profile = () => {
             />
           </div>
 
-          {/* Controlled text inputs */}
+         
           <FormRow
             type="text"
             name="firstName"

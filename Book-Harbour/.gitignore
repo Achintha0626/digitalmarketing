@@ -19,8 +19,8 @@ lerna-debug.log*
 /backend/build
 
 
-.env
-**/.env
+# .env
+# **/.env
 
 
 
