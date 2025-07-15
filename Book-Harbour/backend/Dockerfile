@@ -1,14 +1,20 @@
+# 1) Install dependencies and build
+FROM node:18-alpine AS builder
+WORKDIR /usr/src/app
 
-FROM node:18-alpine AS deps
-WORKDIR /app
+# copy only package files first for better cache
 COPY package*.json ./
-RUN npm ci --production
+RUN npm ci --omit=dev
 
-
-FROM node:18-alpine AS runner
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# copy source & install any remaining tools
 COPY . .
-ENV NODE_ENV=production
+# (no build step for pure JS backend)
+
+# 2) Run
+FROM node:18-alpine
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app ./
+
 EXPOSE 5000
-CMD ["node", "src/index.js"]
+CMD ["npm", "start"]
